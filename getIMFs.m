@@ -1,6 +1,7 @@
 function modes = getIMFs(filename, chan, fs, win, step)
 
-data = matfile(filename).raw_data(chan,:);
+m = matfile(filename);
+data = m.raw_data(chan,:);
 
 % convert window length and step from seconds to samples:
 windowLength = round(win * fs);

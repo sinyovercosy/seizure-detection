@@ -35,12 +35,12 @@ numOfFrames = floor((L-windowLength)/step) + 1;
 % number of features to be computed:
 numOfFeatures = 10;
 Features = zeros(numOfFeatures, numOfFrames);
-Ham = window(@hamming, windowLength);
+%Ham = window(@hamming, windowLength);
 
 for i=1:numOfFrames % for each frame
     % get current frame:
     frame  = signal(curPos:curPos+windowLength-1);
-    frame  = frame .* Ham;
+    %frame  = frame .* Ham;
     [frameFFT,Freq] = getDFT(frame, fs);
     
     

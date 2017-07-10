@@ -76,7 +76,7 @@ k=1;
 aux=zeros(size(x));
 es_imf = min(size(emd(medias(end,:),'MAXMODES',1,'MAXITERATIONS',MaxIter)));
 
-while es_imf>1 %calculates the rest of the modes
+while es_imf>1 %&& k<MaxModes %calculates the rest of the modes
     for i=1:NR
         tamanio=size(modes_white_noise{i});
         if tamanio(1)>=k+1

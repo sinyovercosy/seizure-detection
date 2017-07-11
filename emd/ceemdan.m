@@ -44,7 +44,7 @@
 %Last version: 25 feb 2015
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [modes,its]=ceemdan(x,Nstd,NR,MaxIter,SNRFlag)
+function [modes,its]=ceemdan(x,Nstd,NR,MaxModes,MaxIter,SNRFlag)
 x=x(:)';
 desvio_x=std(x);
 x=x/desvio_x;
@@ -76,7 +76,7 @@ k=1;
 aux=zeros(size(x));
 es_imf = min(size(emd(medias(end,:),'MAXMODES',1,'MAXITERATIONS',MaxIter)));
 
-while es_imf>1 %&& k<MaxModes %calculates the rest of the modes
+while es_imf>1 && k<MaxModes %calculates the rest of the modes
     for i=1:NR
         tamanio=size(modes_white_noise{i});
         if tamanio(1)>=k+1
@@ -110,7 +110,7 @@ while es_imf>1 %&& k<MaxModes %calculates the rest of the modes
     k=k+1;
     es_imf = min(size(emd(medias(end,:),'MAXMODES',1,'MAXITERATIONS',MaxIter)));
 end;
-modes = [modes;medias(end,:)];
+%modes = [modes;medias(end,:)];
 modes=modes*desvio_x;
 its=iter;
 

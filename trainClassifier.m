@@ -84,14 +84,14 @@ if(strcmp(validationMethod,'oob'))
     accu = 1 - oobLoss(classificationEnsemble, 'LossFun', 'ClassifError');
 end
 
-if(NumClasses == 2)
+if(length(classificationEnsemble.ClassNames) == 2)
     [fpr,tpr,~,auc,pt] = perfcurve(classificationEnsemble.Y,validationScores(:,'ictal'==classificationEnsemble.ClassNames),'ictal');
     validationStats = struct('fpr',fpr,'tpr',tpr,'auc',auc,'accu',accu,'sen',pt(2),'spe',1-pt(1));
 else
-    truth = zeros(size(validationScores));
+    truth = zeros(size(validationScores'));
     for i=1:length(classificationEnsemble.Y)
-        truth(i,classificationEnsemble.Y(i)==classificationEnsemble.ClassNames) = 1;
+        truth(classificationEnsemble.Y(i)==classificationEnsemble.ClassNames,i) = 1;
     end
-    validationStats = multiclassPerf(truth,validationScores);
+    validationStats = multiclassPerf(truth,validationScores');
     validationStats.accu = accu;
 end

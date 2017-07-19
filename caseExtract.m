@@ -8,7 +8,7 @@ for i=1:5
         if i==4
             data.class(1:400) = categorical({'nonictal'});
         end
-        [b,stats] = trainClassifier(data);
+        [b,stats] = trainClassifier(data,'cv');
         % b = TreeBagger(50,data,'class','OOBPred','On');
         % [Yfit,Sfit] = oobPredict(b);
         % [fpr,tpr,~,auc,pt] = perfcurve(b.Y,Sfit(:,strcmp('ictal',b.ClassNames)),'ictal');
@@ -17,7 +17,7 @@ for i=1:5
 
         if(imf>1)
             big_data = [big_data,data(:,vartype('numeric'))];
-            [b,stats] = trainClassifier(data);
+            [b,stats] = trainClassifier(data,'cv');
             results{i,4+imf} = stats;
         else
             big_data = data;

@@ -1,4 +1,4 @@
-function [trainedClassifier, validationStats] = trainClassifier(trainingData)
+function [trainedClassifier, validationStats] = trainClassifier(trainingData,validationMethod)
 % [trainedClassifier, validationAccuracy] = trainClassifier(trainingData)
 % returns a trained classifier and its accuracy. This code recreates the
 % classification model trained in Classification Learner app. Use the
@@ -43,11 +43,10 @@ function [trainedClassifier, validationStats] = trainClassifier(trainingData)
 % Extract predictors and response
 % This code processes the data into the right shape for training the
 % model.
-inputTable = trainingData;
-predictors = inputTable(:, vartype('numeric'));
+predictors = trainingData(:, vartype('numeric'));
 predictorNames = predictors.Properties.VariableNames;
-response = inputTable.class;
-isCategoricalPredictor = [false, false, false, false, false, false, false, false, false];
+response = trainingData.class;
+%isCategoricalPredictor = [false, false, false, false, false, false, false, false, false];
 
 % Train a classifier
 % This code specifies all the classifier options and trains the classifier.
@@ -72,19 +71,27 @@ trainedClassifier.ClassificationEnsemble = classificationEnsemble;
 trainedClassifier.About = 'This struct is a trained model exported from Classification Learner R2017a.';
 trainedClassifier.HowToPredict = sprintf('To make predictions on a new table, T, use: \n  yfit = c.predictFcn(T) \nreplacing ''c'' with the name of the variable that is this struct, e.g. ''trainedModel''. \n \nThe table, T, must contain the variables returned by: \n  c.RequiredVariables \nVariable formats (e.g. matrix/vector, datatype) must match the original training data. \nAdditional variables are ignored. \n \nFor more information, see <a href="matlab:helpview(fullfile(docroot, ''stats'', ''stats.map''), ''appclassification_exportmodeltoworkspace'')">How to predict using an exported model</a>.');
 
-% Perform cross-validation
-partitionedModel = crossval(trainedClassifier.ClassificationEnsemble, 'KFold', 5);
+if(strcmp(validationMethod,'cv'))
+    % Perform cross-validation
+    partitionedModel = crossval(classificationEnsemble, 'KFold', 5);
+    % Compute validation predictions
+    [~, validationScores] = kfoldPredict(partitionedModel);
+    accu = 1 - kfoldLoss(partitionedModel, 'LossFun', 'ClassifError');
+end
 
-% Compute validation predictions
-[validationPredictions, validationScores] = kfoldPredict(partitionedModel);
-[fpr,tpr,~,auc,pt] = perfcurve(partitionedModel.Y,validationScores(:,'ictal'==trainedClassifier.ClassificationEnsemble.ClassNames),'ictal');
+if(strcmp(validationMethod,'oob'))
+    [~, validationScores] = oobPredict(classificationEnsemble);
+    accu = 1 - oobLoss(classificationEnsemble, 'LossFun', 'ClassifError');
+end
 
-% Compute validation accuracy
-acuu = 1 - kfoldLoss(partitionedModel, 'LossFun', 'ClassifError');
-validationStats = struct('fpr',fpr,'tpr',tpr,'auc',auc,'accu',acuu,'sen',pt(2),'spe',1-pt(1));
-
-% oob
-% [validationPredictions, validationScores] = oobPredict(trainedClassifier.ClassificationEnsemble);
-% [fpr,tpr,~,auc,pt] = perfcurve(trainedClassifier.ClassificationEnsemble.Y,validationScores(:,'ictal'==trainedClassifier.ClassificationEnsemble.ClassNames),'ictal');
-% plot(fpr,tpr)
-% validationAccuracy = 1 - oobLoss(trainedClassifier.ClassificationEnsemble, 'LossFun', 'ClassifError');
+if(NumClasses == 2)
+    [fpr,tpr,~,auc,pt] = perfcurve(classificationEnsemble.Y,validationScores(:,'ictal'==classificationEnsemble.ClassNames),'ictal');
+    validationStats = struct('fpr',fpr,'tpr',tpr,'auc',auc,'accu',accu,'sen',pt(2),'spe',1-pt(1));
+else
+    truth = zeros(size(validationScores));
+    for i=1:length(classificationEnsemble.Y)
+        truth(i,classificationEnsemble.Y(i)==classificationEnsemble.ClassNames) = 1;
+    end
+    validationStats = multiclassPerf(truth,validationScores);
+    validationStats.accu = accu;
+end

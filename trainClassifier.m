@@ -1,4 +1,4 @@
-function [trainedClassifier, validationStats] = trainClassifier(trainingData,validationMethod)
+function [trainedClassifier, validationStats] = trainClassifier(trainingData,validationMethod,posClass)
 % [trainedClassifier, validationAccuracy] = trainClassifier(trainingData)
 % returns a trained classifier and its accuracy. This code recreates the
 % classification model trained in Classification Learner app. Use the
@@ -50,14 +50,12 @@ response = trainingData.class;
 
 % Train a classifier
 % This code specifies all the classifier options and trains the classifier.
-template = templateTree(...
-    'MaxNumSplits', 499);
 classificationEnsemble = fitcensemble(...
     predictors, ...
     response, ...
     'Method', 'Bag', ...
     'NumLearningCycles', 50, ...
-    'Learners', template); ...
+    'Learners', 'Tree'); ...
     %'ClassNames', categorical({'healthy'; 'interictal'; 'ictal'}, {'healthy' 'interictal' 'ictal'})
 
 % Create the result struct with predict function
@@ -68,8 +66,8 @@ trainedClassifier.predictFcn = @(x) ensemblePredictFcn(predictorExtractionFcn(x)
 % Add additional fields to the result struct
 trainedClassifier.RequiredVariables = predictorNames;
 trainedClassifier.ClassificationEnsemble = classificationEnsemble;
-trainedClassifier.About = 'This struct is a trained model exported from Classification Learner R2017a.';
-trainedClassifier.HowToPredict = sprintf('To make predictions on a new table, T, use: \n  yfit = c.predictFcn(T) \nreplacing ''c'' with the name of the variable that is this struct, e.g. ''trainedModel''. \n \nThe table, T, must contain the variables returned by: \n  c.RequiredVariables \nVariable formats (e.g. matrix/vector, datatype) must match the original training data. \nAdditional variables are ignored. \n \nFor more information, see <a href="matlab:helpview(fullfile(docroot, ''stats'', ''stats.map''), ''appclassification_exportmodeltoworkspace'')">How to predict using an exported model</a>.');
+% trainedClassifier.About = 'This struct is a trained model exported from Classification Learner R2017a.';
+% trainedClassifier.HowToPredict = sprintf('To make predictions on a new table, T, use: \n  yfit = c.predictFcn(T) \nreplacing ''c'' with the name of the variable that is this struct, e.g. ''trainedModel''. \n \nThe table, T, must contain the variables returned by: \n  c.RequiredVariables \nVariable formats (e.g. matrix/vector, datatype) must match the original training data. \nAdditional variables are ignored. \n \nFor more information, see <a href="matlab:helpview(fullfile(docroot, ''stats'', ''stats.map''), ''appclassification_exportmodeltoworkspace'')">How to predict using an exported model</a>.');
 
 if(strcmp(validationMethod,'cv'))
     % Perform cross-validation
@@ -85,7 +83,7 @@ if(strcmp(validationMethod,'oob'))
 end
 
 if(length(classificationEnsemble.ClassNames) == 2)
-    [fpr,tpr,~,auc,pt] = perfcurve(classificationEnsemble.Y,validationScores(:,'ictal'==classificationEnsemble.ClassNames),'ictal');
+    [fpr,tpr,~,auc,pt] = perfcurve(classificationEnsemble.Y,validationScores(:,posClass==classificationEnsemble.ClassNames),posClass);
     validationStats = struct('fpr',fpr,'tpr',tpr,'auc',auc,'accu',accu,'sen',pt(2),'spe',1-pt(1));
 else
     truth = zeros(size(validationScores'));

@@ -9,7 +9,7 @@ out.confusion.per = per;
 nClasses=size(outputs,1);
 beta=1;
 
-avgAccuray=0.0;
+avgAccuracy=0.0;
 
 errRate=0.0;
 
@@ -28,7 +28,7 @@ for i=1:nClasses
     tp=per(i,3);
     tn=per(i,4);
     
-    avgAccuray=+avgAccuray+((tp+tn)/(tp+fn+fp+tn));
+    avgAccuracy=+avgAccuracy+((tp+tn)/(tp+fn+fp+tn));
     
     errRate=+errRate+((fp+fn)/(tp+fn+fp+tn));
     
@@ -43,7 +43,7 @@ for i=1:nClasses
     recallMacro=recallMacro+(tp/(tp+fn));
 end
 %Average Accuracy (The average per-class effectiveness of a classifier)
-avgAccuray=avgAccuray/nClasses;
+avgAccuracy=avgAccuracy/nClasses;
 
 %Error Rate (The average per-class classification error)
 errRate=errRate/nClasses;
@@ -68,7 +68,7 @@ recallMacro=recallMacro/nClasses;
 %Fscore-Macro (Relations between data's positive labels and those given by a classifier based on a per-class average)
 fscoreMacro=((beta^2+1)*precisionMacro*recallMacro)/(beta^2*precisionMacro+recallMacro);
 
-out.avgAccuracy = avgAccuray*100;
+out.avgAccuracy = avgAccuracy*100;
 out.errRate = errRate*100;
 out.precisionMicro = precisionMicro*100;
 out.recallMicro = recallMicro*100;

@@ -1,4 +1,4 @@
-function [trainedClassifier, validationStats] = trainClassifier(trainingData,validationMethod,posClass)
+function [stats,varImp] = trainClassifier(trainingData,validationMethod,posClass)
 % [trainedClassifier, validationAccuracy] = trainClassifier(trainingData)
 % returns a trained classifier and its accuracy. This code recreates the
 % classification model trained in Classification Learner app. Use the
@@ -58,16 +58,20 @@ classificationEnsemble = fitcensemble(...
     'Learners', 'Tree'); ...
     %'ClassNames', categorical({'healthy'; 'interictal'; 'ictal'}, {'healthy' 'interictal' 'ictal'})
 
-% Create the result struct with predict function
-predictorExtractionFcn = @(t) t(:, predictorNames);
-ensemblePredictFcn = @(x) predict(classificationEnsemble, x);
-trainedClassifier.predictFcn = @(x) ensemblePredictFcn(predictorExtractionFcn(x));
-
-% Add additional fields to the result struct
-trainedClassifier.RequiredVariables = predictorNames;
-trainedClassifier.ClassificationEnsemble = classificationEnsemble;
+% % Create the result struct with predict function
+% predictorExtractionFcn = @(t) t(:, predictorNames);
+% ensemblePredictFcn = @(x) predict(classificationEnsemble, x);
+% trainedClassifier.predictFcn = @(x) ensemblePredictFcn(predictorExtractionFcn(x));
+% 
+% % Add additional fields to the result struct
+% trainedClassifier.RequiredVariables = predictorNames;
+% trainedClassifier.ClassificationEnsemble = classificationEnsemble;
 % trainedClassifier.About = 'This struct is a trained model exported from Classification Learner R2017a.';
 % trainedClassifier.HowToPredict = sprintf('To make predictions on a new table, T, use: \n  yfit = c.predictFcn(T) \nreplacing ''c'' with the name of the variable that is this struct, e.g. ''trainedModel''. \n \nThe table, T, must contain the variables returned by: \n  c.RequiredVariables \nVariable formats (e.g. matrix/vector, datatype) must match the original training data. \nAdditional variables are ignored. \n \nFor more information, see <a href="matlab:helpview(fullfile(docroot, ''stats'', ''stats.map''), ''appclassification_exportmodeltoworkspace'')">How to predict using an exported model</a>.');
+
+if(nargout>1)
+    varImp = oobPermutedPredictorImportance(classificationEnsemble);
+end
 
 if(strcmp(validationMethod,'cv'))
     % Perform cross-validation
@@ -84,12 +88,12 @@ end
 
 if(length(classificationEnsemble.ClassNames) == 2)
     [fpr,tpr,~,auc,pt] = perfcurve(classificationEnsemble.Y,validationScores(:,posClass==classificationEnsemble.ClassNames),posClass);
-    validationStats = struct('fpr',fpr,'tpr',tpr,'auc',auc,'accu',accu,'sen',pt(2),'spe',1-pt(1));
+    stats = struct('fpr',fpr,'tpr',tpr,'auc',auc,'accu',accu*100,'sen',pt(2)*100,'spe',(1-pt(1))*100);
 else
     truth = zeros(size(validationScores'));
     for i=1:length(classificationEnsemble.Y)
         truth(classificationEnsemble.Y(i)==classificationEnsemble.ClassNames,i) = 1;
     end
-    validationStats = multiclassPerf(truth,validationScores');
-    validationStats.accu = accu;
+    stats = multiclassPerf(truth,validationScores');
+    stats.accu = accu*100;
 end
